@@ -81,6 +81,14 @@ def lu_factorisation(A):
     L, U = np.zeros_like(A, dtype=float), np.zeros_like(A, dtype=float)
 
     # TODO: fill in L and U
+    for i in range(n):
+        for j in range(i, n):
+            U[i, j] = A[i, j] - np.sum(L[i, :i] * U[:i, j])
+            if i == j:
+                L[i, i] = 1
+            else:
+                L[j, i] = (A[j, i] - np.sum(L[j, :i] * U[:i, i])) / U[i, i]
+
 
     return L, U
 
@@ -175,6 +183,8 @@ def gaussian_elimination(A, b):
             factor = A[j, i] / A[i, i]
             row_add(A, b, j, -factor, i)
 
+import time
+from matplotlib import pyplot as plt
 
 def runtime_comparison():
     """
@@ -190,6 +200,37 @@ def runtime_comparison():
     # ...
     # plt.savefig("plot.png")
 
+    
+def runtime_comparison():
+    """
+    Time lu_factorisation against gaussian_elimination across a range of
+    matrix sizes, produce a log-log plot comparing the two, and save it
+    to "plot.png" (the autograder looks for this exact filename).
+    """
+    sizes = [2**j for j in range(1, 8)]
+    lu_times = []
+    gauss_times = []
+
+    for size in sizes:
+        matrix, b, _ = generate_safe_system(size)
+
+        start_lu = time.perf_counter()
+        lu_factorisation(matrix)
+        lu_times.append(time.perf_counter() - start_lu)
+
+        start_gauss = time.perf_counter()
+        gaussian_elimination(matrix.copy(), b.copy())
+        gauss_times.append(time.perf_counter() - start_gauss)
+
+    plt.figure()
+    plt.loglog(sizes, lu_times, marker="o", label="LU Factorisation")
+    plt.loglog(sizes, gauss_times, marker="o", label="Gaussian Elimination")
+    plt.xlabel("Matrix Size")
+    plt.ylabel("Time (seconds)")
+    plt.title("Runtime Comparison of LU Factorisation and Gaussian Elimination")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig("plot.png")
 
 if __name__ == "__main__":
     A_large, b_large, x_large = generate_safe_system(100)
